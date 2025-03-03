@@ -3,63 +3,33 @@ import zipfile
 import os
 import glob
 import shutil
-
-#Кастомный конструктор, чтобы избавиться от null в пустых значениях, но забил
-#def custom_oyaml_constructor(loader, node):
-#    value = loader.construct_scalar(node)
-#    if value == "":
-#        return ''
-#    return value
-    
-#yaml.SafeLoader.add_constructor("tag:yaml.org,2002:null", custom_oyaml_constructor)
+import winsound
 
 #Путь к архиву
 zip_path = 'unfuse/content.zip'
 #Временная папка для распакованных данных
 temp_dir = 'unpacked_archive'
 
-#Проверяем, есть ли нужный ключ, в нашем случае - perk_1
-def get_nested_fuse_value(unit, keys, default=""):
-    for key in keys:
-        if isinstance(unit, dict) and key in unit:
-            unit = unit[key]
-        else:
-            return default
-    return unit
-
-#Устанавливаем нужное значение во fused:
-def set_nested_fuse_value(unit, keys, value):
-    #:-1 - срез всех элементов, кроме последнего, т.к. последний меняем
-    for key in keys[:-1]:
-        #если ключа нет
-        if key not in unit or not isinstance(unit[key], dict):
-            #Пропускаем
-            continue
-        #итерируемся по ключам
-        unit = unit[key]
-    #меняем значение последнего
-    unit[keys[-1]] = value
-
-#Список ключей и новое значение для fused:
-unfused_perks = [
-    (['parts', 'core', 'systems', 'perk_1', 'fused'], False),
-    (['parts', 'secondary', 'systems', 'perk_1', 'fused'], False),
-    (['parts', 'optional_left', 'systems', 'perk_1', 'fused'], False),
-    (['parts', 'optional_right', 'systems', 'perk_1', 'fused'], False),
-    (['parts', 'equipment_right', 'systems', 'perk_1', 'fused'], False),
-    (['parts', 'equipment_left', 'systems', 'perk_1', 'fused'], False)    
-]
-#(['parts', 'back', 'systems', 'perk_1', 'fused'], False) для ранца, но у них нет перков
+def unfuse(data, new_value):
+    if isinstance(data, dict):
+        if "perk_1" in data and isinstance(data["perk_1"], dict):
+            if "fused" in data["perk_1"]:
+                data["perk_1"]["fused"] = new_value
+                print(f"Отварено: {data['perk_1']['blueprint']}")
+                
+        for key, value in data.items():
+            unfuse(value, new_value)
+    elif isinstance(data, list):
+        for item in data:
+            unfuse(item, new_value)
 
 #Обрабатываем по одному значению
-def unfuse_perks(unit):
+def unfuse_perks_from_units(unit):
     with open(unit, 'r', encoding='utf-8') as unit_file:
         units = yaml.safe_load(unit_file)
-    
-    for keys, value in unfused_perks:
-        if get_nested_fuse_value(units, keys) is not None:
-            set_nested_fuse_value(units, keys, value)
-    
+        
+    unfuse(units, "false")
+        
     with open(unit, 'w') as file:        
         yaml.safe_dump(units, file)
 
@@ -79,15 +49,32 @@ for root, _, files in os.walk(temp_dir):
 
 #Получаем массив файлов юнитов
 unit_files = glob.glob('unpacked_archive/Units/*yaml')
+#Получаем файл инвентаря базы
+base_file = glob.glob('unpacked_archive/OverworldEntities/squad_mobilebase.yaml')
     
+#Отвариваем на юнитах
 for unit in unit_files:
-    unfuse_perks(unit)
+    unfuse_perks_from_units(unit)
     
 for unit in unit_files:
     with open(unit, 'r') as file:
         content = file.read().replace('null', '')
     with open(unit, 'w') as file:
         file.write(content)
+
+#Отвариваем на базе
+with open(base_file[0], 'r', encoding='utf-8') as file:
+    base = yaml.safe_load(file)
+
+unfuse(base, "false")
+    
+with open(base_file[0], 'w') as file:
+    yaml.safe_dump(base, file)
+
+with open(base_file[0], 'r') as file:
+    content = file.read().replace('null', '')
+with open(base_file[0], 'w') as file:
+    file.write(content)
 
 #Пишем в архив        
 with zipfile.ZipFile(zip_path, 'w') as zip_ref:
@@ -103,3 +90,8 @@ with zipfile.ZipFile(zip_path, 'w') as zip_ref:
             
 if os.path.exists(temp_dir):
     shutil.rmtree(temp_dir)
+
+#Пищалка    
+frequency = 1500
+duration = 500
+winsound.Beep(frequency, duration)
