@@ -10,12 +10,20 @@ zip_path = 'unfuse/content.zip'
 #Временная папка для распакованных данных
 temp_dir = 'unpacked_archive'
 
-def unfuse(data, new_value):
+def unfuse(data, new_value):    
     if isinstance(data, dict):
-        if "perk_1" in data and isinstance(data["perk_1"], dict):
-            if "fused" in data["perk_1"]:
-                data["perk_1"]["fused"] = new_value
-                print(f"Отварено: {data['perk_1']['blueprint']}")
+        target_keys = ["perk_1", 
+                   "internal_aux_defense", 
+                   "internal_aux_offense", 
+                   "internal_aux_weapon",
+                   "internal_aux_top_core",
+                   "internal_aux_top_thrusters", 
+                   "internal_aux_mobility"]
+        for key_name in target_keys:
+            if key_name in data and isinstance(data[key_name], dict):
+                if "fused" in data[key_name]:
+                    data[key_name]["fused"] = new_value
+                    print(f"Отварено: {data[key_name]['blueprint']}")
                 
         for key, value in data.items():
             unfuse(value, new_value)
