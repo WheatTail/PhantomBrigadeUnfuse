@@ -50,7 +50,7 @@ for root, _, files in os.walk(temp_dir):
 #Получаем массив файлов юнитов
 unit_files = glob.glob('unpacked_archive/Units/*yaml')
 #Получаем файл инвентаря базы
-base_file = glob.glob('unpacked_archive/OverworldEntities/squad_mobilebase.yaml')
+base_file = glob.glob('unpacked_archive/OverworldEntities/internal_mobilebase.yaml')
     
 #Отвариваем на юнитах
 for unit in unit_files:
