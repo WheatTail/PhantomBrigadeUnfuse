@@ -67,6 +67,7 @@ for unit in unit_files:
 for unit in unit_files:
     with open(unit, 'r') as file:
         content = file.read().replace('null', '')
+        content = content.replace("'false'", "false").replace('"false"', 'false')
     with open(unit, 'w') as file:
         file.write(content)
 
@@ -81,6 +82,7 @@ with open(base_file[0], 'w') as file:
 
 with open(base_file[0], 'r') as file:
     content = file.read().replace('null', '')
+    content = content.replace("'false'", "false").replace('"false"', 'false')
 with open(base_file[0], 'w') as file:
     file.write(content)
 
